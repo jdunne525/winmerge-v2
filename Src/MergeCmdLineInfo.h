@@ -61,6 +61,15 @@ public:
 
 	ShowWindowType m_nCmdShow; /**< Initial state of the application's window. */
 
+	enum MergePane
+	{
+		NOMERGEPANE = 0,
+		LEFTPANE = 1,
+		MIDDLEPANE = 2,
+		RIGHTPANE = 3,
+	};
+	MergePane m_nMergePane; /**< Destination pane to merge a conflict file in. */
+
 	bool m_bClearCaseTool; /**< Running as Rational ClearCase external tool. */
 	bool m_bEscShutdown; /**< Pressing ESC will close the application */
 	ExitNoDiff m_bExitIfNoDiff; /**< Exit if files are identical. */

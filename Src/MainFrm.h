@@ -138,6 +138,7 @@ protected:
 // Public implementation data
 public:
 	BOOL m_bFirstTime; /**< If first time frame activated, get  pos from reg */
+	std::vector<TempFilePtr> m_tempFiles; /**< List of possibly needed temp files. */
 
 // Implementation data
 protected:
@@ -193,7 +194,6 @@ protected:
 	static const MENUITEM_ICON m_MenuIcons[];
 
 	std::unique_ptr<BCMenu> m_pMenus[MENU_COUNT]; /**< Menus for different views */
-	std::vector<TempFilePtr> m_tempFiles; /**< List of possibly needed temp files. */
 	DropHandler *m_pDropHandler;
 
 // Generated message map functions

@@ -124,7 +124,8 @@ MergeCmdLineInfo::MergeCmdLineInfo(const TCHAR *q):
 	m_nCodepage(0),
 	m_dwLeftFlags(FFILEOPEN_NONE),
 	m_dwMiddleFlags(FFILEOPEN_NONE),
-	m_dwRightFlags(FFILEOPEN_NONE)
+	m_dwRightFlags(FFILEOPEN_NONE),
+	m_nMergePane(NOMERGEPANE)
 {
 	// Rational ClearCase has a weird way of executing external
 	// tools which replace the build-in ones. It also doesn't allow
@@ -271,6 +272,21 @@ void MergeCmdLineInfo::ParseWinMergeCmdLine(const TCHAR *q)
 		{
 			// -o "outputfilename"
 			q = EatParam(q, m_sOutputpath);
+		}
+		else if (param == _T("ml"))
+		{
+			// -ml specifies the left file is a conflict file.  (merging will occur in the left pane)
+			m_nMergePane = LEFTPANE;
+		}
+		else if (param == _T("mm"))
+		{
+			// -mm specifies the middle file is a conflict file.  (merging will occur in the middle pane)
+			m_nMergePane = MIDDLEPANE;
+		}
+		else if (param == _T("mr"))
+		{
+			// -mr specifies the right file is a conflict file.  (merging will occur in the right pane)
+			m_nMergePane = RIGHTPANE;
 		}
 		else if (param == _T("or"))
 		{

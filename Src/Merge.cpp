@@ -683,11 +683,64 @@ BOOL CMergeApp::ParseArgsAndDoOpen(MergeCmdLineInfo& cmdInfo, CMainFrame* pMainF
 
 		if (cmdInfo.m_Files.GetSize() > 2)
 		{
+			PathContext FilesToOpen(cmdInfo.m_Files);
+						
+			if (cmdInfo.m_nMergePane != cmdInfo.NOMERGEPANE) {
+				if (IsConflictFile(cmdInfo.m_Files[cmdInfo.m_nMergePane-1])) {
+
+					// Create temp files and put them into the list,
+					// from where they get deleted when MainFrame is deleted.
+					String ext = paths::FindExtension(cmdInfo.m_Files[cmdInfo.m_nMergePane - 1]);
+					TempFilePtr wTemp(new TempFile());
+					String workFile = wTemp->Create(_T("confw_"), ext);
+					pMainFrame->m_tempFiles.push_back(wTemp);
+					TempFilePtr vTemp(new TempFile());
+					String revFile = vTemp->Create(_T("confv_"), ext);
+					pMainFrame->m_tempFiles.push_back(vTemp);
+					TempFilePtr bTemp(new TempFile());
+					String baseFile = vTemp->Create(_T("confb_"), ext);
+					pMainFrame->m_tempFiles.push_back(bTemp);
+
+					// Parse conflict file into two files.
+					bool inners, threeWay;
+					int iGuessEncodingType = GetOptionsMgr()->GetInt(OPT_CP_DETECT);
+					bool success = ParseConflictFile(cmdInfo.m_Files[cmdInfo.m_nMergePane - 1], workFile, revFile, baseFile, iGuessEncodingType, inners, threeWay);
+
+					if (success)
+					{
+						//Replace the specified file with the conflict file "Mine" result:
+						//success = CopyFile((LPTSTR)workFile.c_str(), (LPTSTR)(cmdInfo.m_Files[cmdInfo.m_nMergePane - 1]).c_str(), FALSE);
+						theApp.m_strSaveAsPath = cmdInfo.m_Files[cmdInfo.m_nMergePane - 1].c_str();
+						switch (cmdInfo.m_nMergePane) {
+						case cmdInfo.LEFTPANE:
+							cmdInfo.m_dwLeftFlags |= FFILEOPEN_NOMRU | FFILEOPEN_MODIFIED;
+							FilesToOpen.SetLeft(workFile);
+							if (strDesc[0].empty()) strDesc[0] = cmdInfo.m_Files[0];
+							break;
+						case cmdInfo.MIDDLEPANE:
+							cmdInfo.m_dwMiddleFlags |= FFILEOPEN_NOMRU | FFILEOPEN_MODIFIED;
+							FilesToOpen.SetMiddle(workFile);
+							if (strDesc[1].empty()) strDesc[1] = cmdInfo.m_Files[1];
+							break;
+						case cmdInfo.RIGHTPANE:
+							cmdInfo.m_dwRightFlags |= FFILEOPEN_NOMRU | FFILEOPEN_MODIFIED;
+							FilesToOpen.SetRight(workFile);
+							if (strDesc[2].empty()) strDesc[2] = cmdInfo.m_Files[2];
+							break;
+						}
+
+						if (strDesc[0].empty()) strDesc[0] = cmdInfo.m_Files[0];
+						if (strDesc[1].empty()) strDesc[1] = cmdInfo.m_Files[1];
+						if (strDesc[2].empty()) strDesc[2] = cmdInfo.m_Files[2];
+					}
+				}
+			}
+
 			cmdInfo.m_dwLeftFlags |= FFILEOPEN_CMDLINE;
 			cmdInfo.m_dwMiddleFlags |= FFILEOPEN_CMDLINE;
 			cmdInfo.m_dwRightFlags |= FFILEOPEN_CMDLINE;
 			DWORD dwFlags[3] = {cmdInfo.m_dwLeftFlags, cmdInfo.m_dwMiddleFlags, cmdInfo.m_dwRightFlags};
-			bCompared = pMainFrame->DoFileOpen(&cmdInfo.m_Files,
+			bCompared = pMainFrame->DoFileOpen(&FilesToOpen,
 				dwFlags, strDesc, cmdInfo.m_sReportFile, cmdInfo.m_bRecurse, NULL,
 				cmdInfo.m_sPreDiffer);
 		}
